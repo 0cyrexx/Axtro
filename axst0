@@ -1,0 +1,438 @@
+-- Five Nights Hunted Cheat Script
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character.Humanoid
+
+-- Erstelle das Hauptfenster
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FNH_CheatGUI"
+screenGui.Parent = player.PlayerGui
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Parent = screenGui
+mainFrame.Size = UDim2.new(0, 600, 0, 500)
+mainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
+mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+-- Futuristischer Rahmen-Effekt
+local glowFrame = Instance.new("Frame")
+glowFrame.Parent = mainFrame
+glowFrame.Size = UDim2.new(1, 10, 1, 10)
+glowFrame.Position = UDim2.new(0, -5, 0, -5)
+glowFrame.BackgroundColor3 = Color3.new(0, 0.3, 0.8)
+glowFrame.BorderSizePixel = 0
+glowFrame.BackgroundTransparency = 0.8
+glowFrame.ZIndex = mainFrame.ZIndex - 1
+
+-- Titel
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Parent = mainFrame
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+titleLabel.BackgroundTransparency = 0.5
+titleLabel.BorderSizePixel = 0
+titleLabel.Text = "FIVE NIGHTS HUNTED - ULTIMATE CHEAT PANEL"
+titleLabel.TextColor3 = Color3.new(0, 0.8, 1)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.ScienceFuture
+
+-- Tab-Container
+local tabContainer = Instance.new("Frame")
+tabContainer.Parent = mainFrame
+tabContainer.Size = UDim2.new(1, 0, 0, 50)
+tabContainer.Position = UDim2.new(0, 0, 0, 40)
+tabContainer.BackgroundColor3 = Color3.new(0, 0, 0)
+tabContainer.BackgroundTransparency = 0.5
+tabContainer.BorderSizePixel = 0
+
+-- Tabs
+local tabs = {}
+local tabNames = {"Movement", "Visual", "Player", "Money", "Teleport"}
+local selectedTab = 1
+
+for i = 1, #tabNames do
+    local tab = Instance.new("TextButton")
+    tab.Parent = tabContainer
+    tab.Size = UDim2.new(0, 120, 1, 0)
+    tab.Position = UDim2.new(0, (i-1) * 120, 0, 0)
+    tab.BackgroundColor3 = Color3.new(0, 0, 0)
+    tab.BackgroundTransparency = 0.5
+    tab.BorderSizePixel = 0
+    tab.Text = tabNames[i]
+    tab.TextColor3 = Color3.new(0, 0.8, 1)
+    tab.TextScaled = true
+    tab.Font = Enum.Font.ScienceFuture
+    tab.Name = "Tab" .. i
+    
+    tab.MouseEnter:Connect(function()
+        tab.BackgroundTransparency = 0.2
+    end)
+    
+    tab.MouseLeave:Connect(function()
+        if tonumber(string.sub(tab.Name, 4)) ~= selectedTab then
+            tab.BackgroundTransparency = 0.5
+        end
+    end)
+    
+    tab.MouseButton1Click:Connect(function()
+        selectedTab = tonumber(string.sub(tab.Name, 4))
+        updateTabs()
+        updateContent()
+    end)
+    
+    table.insert(tabs, tab)
+end
+
+-- Content-Bereich
+local contentFrame = Instance.new("Frame")
+contentFrame.Parent = mainFrame
+contentFrame.Size = UDim2.new(1, 0, 1, -90)
+contentFrame.Position = UDim2.new(0, 0, 0, 90)
+contentFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+contentFrame.BackgroundTransparency = 0.5
+contentFrame.BorderSizePixel = 0
+
+-- Tab-Inhalte erstellen
+local tabContents = {}
+
+-- Movement Tab
+local movementTab = Instance.new("ScrollingFrame")
+movementTab.Parent = contentFrame
+movementTab.Size = UDim2.new(1, 0, 1, 0)
+movementTab.Position = UDim2.new(0, 0, 0, 0)
+movementTab.BackgroundTransparency = 1
+movementTab.BorderSizePixel = 0
+movementTab.Visible = true
+movementTab.ScrollBarThickness = 5
+movementTab.ScrollBarImageColor3 = Color3.new(0, 0.8, 1)
+table.insert(tabContents, movementTab)
+
+-- Speed Einstellung
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Parent = movementTab
+speedLabel.Size = UDim2.new(0, 200, 0, 30)
+speedLabel.Position = UDim2.new(0, 20, 0, 20)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed Multiplier"
+speedLabel.TextColor3 = Color3.new(0, 0.8, 1)
+speedLabel.TextScaled = true
+speedLabel.Font = Enum.Font.ScienceFuture
+
+local speedSlider = Instance.new("TextButton")
+speedSlider.Parent = movementTab
+speedSlider.Size = UDim2.new(0, 200, 0, 10)
+speedSlider.Position = UDim2.new(0, 20, 0, 50)
+speedSlider.BackgroundColor3 = Color3.new(0, 0.3, 0.8)
+speedSlider.BorderSizePixel = 0
+speedSlider.AutoButtonColor = false
+
+local speedValue = Instance.new("TextLabel")
+speedValue.Parent = movementTab
+speedValue.Size = UDim2.new(0, 50, 0, 30)
+speedValue.Position = UDim2.new(0, 230, 0, 20)
+speedValue.BackgroundTransparency = 1
+speedValue.Text = "1.0"
+speedValue.TextColor3 = Color3.new(0, 0.8, 1)
+speedValue.TextScaled = true
+speedValue.Font = Enum.Font.ScienceFuture
+
+local speedMultiplier = 1.0
+local defaultWalkSpeed = humanoid.WalkSpeed
+
+local function updateSpeed()
+    humanoid.WalkSpeed = defaultWalkSpeed * speedMultiplier
+end
+
+local isDraggingSpeed = false
+speedSlider.MouseButton1Down:Connect(function()
+    isDraggingSpeed = true
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if isDraggingSpeed and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local relativeX = input.Position.X - speedSlider.AbsolutePosition.X
+        relativeX = math.max(0, math.min(relativeX, speedSlider.AbsoluteSize.X))
+        speedMultiplier = 0.5 + (relativeX / speedSlider.AbsoluteSize.X) * 4.5 -- 0.5 bis 5.0
+        speedValue.Text = string.format("%.1f", speedMultiplier)
+        updateSpeed()
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDraggingSpeed = false
+    end
+end)
+
+-- Fly Button
+local flyButton = Instance.new("TextButton")
+flyButton.Parent = movementTab
+flyButton.Size = UDim2.new(0, 200, 0, 40)
+flyButton.Position = UDim2.new(0, 20, 0, 80)
+flyButton.BackgroundColor3 = Color3.new(0, 0.3, 0.8)
+flyButton.BorderSizePixel = 0
+flyButton.Text = "FLY: OFF"
+flyButton.TextColor3 = Color3.new(0, 0.8, 1)
+flyButton.TextScaled = true
+flyButton.Font = Enum.Font.ScienceFuture
+
+local flyEnabled = false
+local flySpeed = 50
+local bv, bg
+
+local function toggleFly()
+    flyEnabled = not flyEnabled
+    flyButton.Text = "FLY: " .. (flyEnabled and "ON" or "OFF")
+    
+    if flyEnabled then
+        bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = humanoid.RootPart
+        
+        bg = Instance.new("BodyGyro")
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.P = 10000
+        bg.Parent = humanoid.RootPart
+    else
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+    end
+end
+
+flyButton.MouseButton1Click:Connect(toggleFly)
+
+-- Fly Steuerung
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if flyEnabled then
+        if input.KeyCode == Enum.KeyCode.W then
+            bv.Velocity = humanoid.RootPart.CFrame.lookVector * flySpeed
+        elseif input.KeyCode == Enum.KeyCode.S then
+            bv.Velocity = humanoid.RootPart.CFrame.lookVector * -flySpeed
+        elseif input.KeyCode == Enum.KeyCode.A then
+            bv.Velocity = humanoid.RootPart.CFrame.RightVector * -flySpeed
+        elseif input.KeyCode == Enum.KeyCode.D then
+            bv.Velocity = humanoid.RootPart.CFrame.RightVector * flySpeed
+        elseif input.KeyCode == Enum.KeyCode.Space then
+            bv.Velocity = Vector3.new(0, flySpeed, 0)
+        elseif input.KeyCode == Enum.KeyCode.LeftShift then
+            bv.Velocity = Vector3.new(0, -flySpeed, 0)
+        end
+    end
+end)
+
+-- NoClip Button
+local noclipButton = Instance.new("TextButton")
+noclipButton.Parent = movementTab
+noclipButton.Size = UDim2.new(0, 200, 0, 40)
+noclipButton.Position = UDim2.new(0, 20, 0, 130)
+noclipButton.BackgroundColor3 = Color3.new(0, 0.3, 0.8)
+noclipButton.BorderSizePixel = 0
+noclipButton.Text = "NOCLIP: OFF"
+noclipButton.TextColor3 = Color3.new(0, 0.8, 1)
+noclipButton.TextScaled = true
+noclipButton.Font = Enum.Font.ScienceFuture
+
+local noclipEnabled = false
+local noclipConnection
+
+local function toggleNoclip()
+    noclipEnabled = not noclipEnabled
+    noclipButton.Text = "NOCLIP: " .. (noclipEnabled and "ON" or "OFF")
+    
+    if noclipEnabled then
+        noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide == true then
+                    part.CanCollide = false
+                end
+            end
+        end)
+    else
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
+        end
+        
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+end
+
+noclipButton.MouseButton1Click:Connect(toggleNoclip)
+
+-- Visual Tab
+local visualTab = Instance.new("ScrollingFrame")
+visualTab.Parent = contentFrame
+visualTab.Size = UDim2.new(1, 0, 1, 0)
+visualTab.Position = UDim2.new(0, 0, 0, 0)
+visualTab.BackgroundTransparency = 1
+visualTab.BorderSizePixel = 0
+visualTab.Visible = false
+visualTab.ScrollBarThickness = 5
+visualTab.ScrollBarImageColor3 = Color3.new(0, 0.8, 1)
+table.insert(tabContents, visualTab)
+
+-- Unsichtbar Button
+local invisibleButton = Instance.new("TextButton")
+invisibleButton.Parent = visualTab
+invisibleButton.Size = UDim2.new(0, 200, 0, 40)
+invisibleButton.Position = UDim2.new(0, 20, 0, 20)
+invisibleButton.BackgroundColor3 = Color3.new(0, 0.3, 0.8)
+invisibleButton.BorderSizePixel = 0
+invisibleButton.Text = "INVISIBLE: OFF"
+invisibleButton.TextColor3 = Color3.new(0, 0.8, 1)
+invisibleButton.TextScaled = true
+invisibleButton.Font = Enum.Font.ScienceFuture
+
+local invisibleEnabled = false
+local originalTransparency = {}
+
+local function toggleInvisible()
+    invisibleEnabled = not invisibleEnabled
+    invisibleButton.Text = "INVISIBLE: " .. (invisibleEnabled and "ON" or "OFF")
+    
+    if invisibleEnabled then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                originalTransparency[part] = part.Transparency
+                part.Transparency = 1
+            end
+        end
+        
+        if character:FindFirstChild("Head") and character.Head:FindFirstChild("face") then
+            character.Head.face.Transparency = 1
+        end
+    else
+        for part, transparency in pairs(originalTransparency) do
+            part.Transparency = transparency
+        end
+        originalTransparency = {}
+        
+        if character:FindFirstChild("Head") and character.Head:FindFirstChild("face") then
+            character.Head.face.Transparency = 0
+        end
+    end
+end
+
+invisibleButton.MouseButton1Click:Connect(toggleInvisible)
+
+-- ESP Button
+local espButton = Instance.new("TextButton")
+espButton.Parent = visualTab
+espButton.Size = UDim2.new(0, 200, 0, 40)
+espButton.Position = UDim2.new(0, 20, 0, 70)
+espButton.BackgroundColor3 = Color3.new(0, 0.3, 0.8)
+espButton.BorderSizePixel = 0
+espButton.Text = "ESP: OFF"
+espButton.TextColor3 = Color3.new(0, 0.8, 1)
+espButton.TextScaled = true
+espButton.Font = Enum.Font.ScienceFuture
+
+local espEnabled = false
+local espConnections = {}
+
+local function createEspHighlight(model, color)
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = model
+    highlight.FillColor = color
+    highlight.FillTransparency = 0.3
+    highlight.OutlineColor = color
+    return highlight
+end
+
+local function toggleEsp()
+    espEnabled = not espEnabled
+    espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+    
+    if espEnabled then
+        -- Spieler-ESP
+        for _, plr in pairs(game.Players:GetPlayers()) do
+            if plr ~= player and plr.Character then
+                local highlight = createEspHighlight(plr.Character, Color3.new(0, 0.8, 1))
+                table.insert(espConnections, highlight)
+            end
+        end
+        
+        -- Animatronik-ESP (rot)
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name:lower():find("animatron") or obj.Name:lower():find("monster") or obj.Name:lower():find("enemy") then
+                local highlight = createEspHighlight(obj, Color3.new(1, 0, 0))
+                table.insert(espConnections, highlight)
+            end
+        end
+        
+        -- Neue Spieler erkennen
+        game.Players.PlayerAdded:Connect(function(plr)
+            if espEnabled and plr ~= player and plr.Character then
+                local highlight = createEspHighlight(plr.Character, Color3.new(0, 0.8, 1))
+                table.insert(espConnections, highlight)
+            end
+        end)
+    else
+        -- ESP entfernen
+        for _, connection in pairs(espConnections) do
+            if connection and connection.Parent then
+                connection:Destroy()
+            end
+        end
+        espConnections = {}
+    end
+end
+
+espButton.MouseButton1Click:Connect(toggleEsp)
+
+-- Player Tab
+local playerTab = Instance.new("ScrollingFrame")
+playerTab.Parent = contentFrame
+playerTab.Size = UDim2.new(1, 0, 1, 0)
+playerTab.Position = UDim2.new(0, 0, 0, 0)
+playerTab.BackgroundTransparency = 1
+playerTab.BorderSizePixel = 0
+playerTab.Visible = false
+playerTab.ScrollBarThickness = 5
+playerTab.ScrollBarImageColor3 = Color3.new(0, 0.8, 1)
+table.insert(tabContents, playerTab)
+
+-- Clone Button
+local cloneButton = Instance.new("TextButton")
+cloneButton.Parent = playerTab
+cloneButton.Size = UDim2.new(0, 200, 0, 40)
+cloneButton.Position = UDim2.new(0, 20, 0, 20)
+cloneButton.BackgroundColor3 = Color3.new(0, 0.3, 0.8)
+cloneButton.BorderSizePixel = 0
+cloneButton.Text = "CREATE DECOY"
+cloneButton.TextColor3 = Color3.new(0, 0.8, 1)
+cloneButton.TextScaled = true
+cloneButton.Font = Enum.Font.ScienceFuture
+
+local function createDecoy()
+    local decoy = character:Clone()
+    decoy.Name = "Decoy"
+    decoy.Parent = workspace
+    decoy.HumanoidRootPart.CFrame = humanoid.RootPart.CFrame + humanoid.RootPart.CFrame.lookVector * 5
+    
+    -- Leuchter Effekt hinzufügen
+    local glow = Instance.new("PointLight")
+    glow.Parent = decoy.HumanoidRootPart
+    glow.Color = Color3.new(0, 0.8, 1)
+    glow.Range = 15
+    glow.Brightness = 2
+    
+    -- Nach 30 Sekunden entfernen
+    game:GetService("Debris"):AddItem(decoy, 30)
+end
+
+cloneButton.MouseButton1Click:Connect(createDecoy)
+
+-- Money Tab
+local moneyTab = Instance.new("ScrollingFrame
